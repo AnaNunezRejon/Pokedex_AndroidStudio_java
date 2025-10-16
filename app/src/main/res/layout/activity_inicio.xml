@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/fondo_pokedex_dos"
+    tools:context=".view.ActivityInicio">
+
+    <!-- Imagen de fondo completa y clicable -->
+    <ImageButton
+        android:id="@+id/btnIrATipos"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/fondo_pokedex_uno"
+        android:background="@null"
+        android:scaleType="fitXY"
+        android:contentDescription="Ir a selección de tipos" />
+</RelativeLayout>

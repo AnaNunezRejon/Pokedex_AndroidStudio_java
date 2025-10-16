@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F9C7D4"
+    android:paddingTop="20dp">
+
+    <!-- 🔹 Barra superior -->
+    <LinearLayout
+        android:id="@+id/barraSuperior"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="12dp">
+
+        <ImageButton
+            android:id="@+id/btnVolverDetalle"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:background="@drawable/btn_volver"
+            android:contentDescription="Volver"
+            android:padding="8dp"
+            android:scaleType="centerInside" />
+
+        <EditText
+            android:id="@+id/inputBuscarDetalle"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:hint="Buscar Pokémon..."
+            android:background="@drawable/rounded_search_background_white"
+            android:textColorHint="#999"
+            android:textColor="#000"
+            android:paddingHorizontal="15dp"
+            android:layout_marginLeft="8dp" />
+    </LinearLayout>
+
+    <!-- 🔹 Caja morada degradada -->
+    <LinearLayout
+        android:id="@+id/cajaMorada"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/barraSuperior"
+        android:layout_above="@id/logoInicioDetalle"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:background="@drawable/fondo_pokedex"
+        android:layout_marginHorizontal="18dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="70dp"
+        android:padding="20dp"
+        android:clipToOutline="true"
+        android:elevation="6dp"
+        android:backgroundTintMode="src_over">
+
+        <!-- Imagen Pokémon -->
+        <ImageView
+            android:id="@+id/imgPokemonDetalle"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_marginBottom="10dp"
+            android:scaleType="fitCenter" />
+
+        <!-- Número -->
+        <TextView
+            android:id="@+id/txtNumeroPokemon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="#003"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:layout_marginTop="8dp" />
+
+        <!-- Nombre -->
+        <TextView
+            android:id="@+id/txtNombrePokemon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="VENUSAUR"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:textSize="22sp"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Datos -->
+        <LinearLayout
+            android:id="@+id/cajaDatos"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="12dp"
+            android:gravity="center_horizontal"
+            android:paddingHorizontal="16dp">
+
+            <TextView
+                android:id="@+id/txtAltura"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Altura: 2.0 m"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/txtPeso"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Peso: 100.0 kg"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/txtSexo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sexo: ♂ ♀"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/txtCategoria"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Categoría: Semilla"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/txtHabilidad"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Habilidad: Espesura"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- Tipo -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tipo"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:textSize="15sp"
+            android:layout_marginTop="10dp"
+            android:gravity="start" />
+
+        <LinearLayout
+            android:id="@+id/contenedorTipos"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="start"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Debilidad -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Debilidad"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:textSize="15sp"
+            android:gravity="start" />
+
+        <com.google.android.flexbox.FlexboxLayout
+            android:id="@+id/contenedorDebilidades"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:justifyContent="flex_start"
+            app:flexWrap="wrap"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="8dp" />
+
+    </LinearLayout>
+
+    <!-- Logo Pokédex -->
+    <ImageButton
+        android:id="@+id/logoInicioDetalle"
+        android:layout_width="180dp"
+        android:layout_height="70dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:src="@drawable/logo_pokedex"
+        android:background="@android:color/transparent"
+        android:scaleType="fitCenter"
+        android:layout_marginBottom="4dp" />
+
+</RelativeLayout>

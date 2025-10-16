@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8BBD0"
+    android:paddingTop="16dp"
+    android:paddingBottom="8dp"
+    tools:context=".view.ActivityTipos">
+
+    <!-- 🔹 Barra superior con botón volver y buscador -->
+    <LinearLayout
+        android:id="@+id/barraSuperior"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginBottom="12dp">
+
+        <ImageButton
+            android:id="@+id/btnVolverTipos"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:src="@drawable/btn_volver"
+            android:background="@null"
+            android:contentDescription="Volver"
+            android:layout_marginEnd="10dp" />
+
+        <EditText
+            android:id="@+id/inputBuscarTipos"
+            android:layout_width="0dp"
+            android:layout_height="45dp"
+            android:layout_weight="1"
+            android:hint="Buscar Pokémon..."
+            android:background="@drawable/rounded_search_background_white"
+            android:paddingStart="16dp"
+            android:textColor="@android:color/black"
+            android:textColorHint="#888"
+            android:singleLine="true"
+            android:elevation="3dp" />
+    </LinearLayout>
+
+    <!-- 🟣 Contenedor de tipos -->
+    <GridLayout
+        android:id="@+id/gridTipos"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/barraSuperior"
+        android:columnCount="2"
+        android:alignmentMode="alignMargins"
+        android:useDefaultMargins="true"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="20dp"
+        android:gravity="center">
+
+        <!-- Fila 1 -->
+        <TextView
+            android:id="@+id/btnPlanta"
+            android:text="PLANTA"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:background="@drawable/btn_planta"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground" />
+
+        <TextView
+            android:id="@+id/btnBicho"
+            android:text="BICHO"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:background="@drawable/btn_bicho"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground" />
+
+        <!-- Fila 2 -->
+        <TextView
+            android:id="@+id/btnAgua"
+            android:text="AGUA"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:background="@drawable/btn_agua"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground" />
+
+        <TextView
+            android:id="@+id/btnHielo"
+            android:text="HIELO"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:background="@drawable/btn_hielo"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground" />
+
+        <!-- Fila 3 -->
+        <TextView
+            android:id="@+id/btnFuego"
+            android:text="FUEGO"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:background="@drawable/btn_fuego"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground" />
+
+        <TextView
+            android:id="@+id/btnRoca"
+            android:text="ROCA"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:background="@drawable/btn_roca"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground" />
+
+        <!-- Fila 4 -->
+        <TextView
+            android:id="@+id/btnTierra"
+            android:text="TIERRA"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:background="@drawable/btn_tierra"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground" />
+
+        <TextView
+            android:id="@+id/btnLucha"
+            android:text="LUCHA"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:background="@drawable/btn_lucha"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground" />
+
+        <!-- Fila 5 -->
+        <TextView
+            android:id="@+id/btnElectrico"
+            android:text="ELÉCTRICO"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:background="@drawable/btn_electrico"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground" />
+
+        <TextView
+            android:id="@+id/btnSiniestro"
+            android:text="SINIESTRO"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:background="@drawable/btn_siniestro"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground" />
+
+        <!-- Fila 6 -->
+        <TextView
+            android:id="@+id/btnNormal"
+            android:text="NORMAL"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:background="@drawable/btn_normal"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground" />
+
+        <TextView
+            android:id="@+id/btnFantasma"
+            android:text="FANTASMA"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:background="@drawable/btn_fantasma"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground" />
+
+        <!-- Fila 7 -->
+        <TextView
+            android:id="@+id/btnVeneno"
+            android:text="VENENO"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:background="@drawable/btn_veneno"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground" />
+
+        <TextView
+            android:id="@+id/btnPsiquico"
+            android:text="PSÍQUICO"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:background="@drawable/btn_psiquico"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground" />
+
+        <!-- Fila 8 -->
+        <TextView
+            android:id="@+id/btnHada"
+            android:text="HADA"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:background="@drawable/btn_hada"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground" />
+
+        <TextView
+            android:id="@+id/btnDragon"
+            android:text="DRAGÓN"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:background="@drawable/btn_dragon"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground" />
+
+        <!-- Fila 9 -->
+        <TextView
+            android:id="@+id/btnAcero"
+            android:text="ACERO"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:background="@drawable/btn_acero"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground" />
+
+        <TextView
+            android:id="@+id/btnVolador"
+            android:text="VOLADOR"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:background="@drawable/btn_volador"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground" />
+    </GridLayout>
+
+
+    <!-- 🔘 Logo inferior -->
+    <ImageButton
+        android:id="@+id/btnLogoInicio"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="6dp"
+        android:src="@drawable/logo_pokedex"
+        android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
+        android:background="@android:color/transparent"
+        android:contentDescription="Volver al inicio"/>
+
+</RelativeLayout>
+
+
