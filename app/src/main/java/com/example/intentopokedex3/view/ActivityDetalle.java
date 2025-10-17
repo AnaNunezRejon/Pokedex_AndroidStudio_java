@@ -1,33 +1,45 @@
 package com.example.intentopokedex3.view;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
-import android.os.AsyncTask;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.content.Intent;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.Color;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.bumptech.glide.Glide;
 import com.example.intentopokedex3.R;
 import com.example.intentopokedex3.controller.PokedexApi;
 import com.example.intentopokedex3.model.Pokemon;
 import com.google.android.flexbox.FlexboxLayout;
 
 import org.json.JSONArray;
-import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+//BUSCADOR
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.AdapterView;
 
 public class ActivityDetalle extends AppCompatActivity {
 
@@ -62,76 +74,162 @@ public class ActivityDetalle extends AppCompatActivity {
         contenedorTipos = findViewById(R.id.contenedorTipos);
         contenedorDebilidades = findViewById(R.id.contenedorDebilidades);
 
-        // 🔹 Recuperar datos del intent
+        // 🔙 Botón volver
+        btnVolverDetalle.setOnClickListener(v -> finish());
+
+        // 🏠 Logo inferior → volver al inicio
+        logoInicioDetalle.setOnClickListener(v -> {
+            Intent i = new Intent(ActivityDetalle.this, ActivityInicio.class);
+            startActivity(i);
+        });
+
+        // 🔍 BUSCADOR
+        ListView listaSugerencias = findViewById(R.id.listaSugerencias);
+        ArrayList<String> nombresPokemon = new ArrayList<>();
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, nombresPokemon);
+        listaSugerencias.setAdapter(adapter);
+
+        // Escucha el texto del buscador
+        inputBuscarDetalle.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String texto = s.toString().trim().toLowerCase();
+
+                if (texto.length() >= 1) {
+                    PokedexApi.buscarPorNombre(texto, lista -> {
+                        runOnUiThread(() -> {
+                            nombresPokemon.clear();
+                            for (Pokemon p : lista) {
+                                nombresPokemon.add("#" + p.getNumero() + " " + p.getNombre().toUpperCase());
+                            }
+                            adapter.notifyDataSetChanged();
+                            listaSugerencias.setVisibility(View.VISIBLE);
+                        });
+                    });
+                } else {
+                    listaSugerencias.setVisibility(View.GONE);
+                }
+            }
+
+            @Override public void afterTextChanged(Editable s) {}
+        });
+
+        // Cuando el usuario pulsa sobre un Pokémon de la lista
+        listaSugerencias.setOnItemClickListener((parent, view, position, id) -> {
+            String textoSeleccionado = nombresPokemon.get(position);
+            // Ejemplo: "#1 BULBASAUR"
+            String[] partes = textoSeleccionado.split(" ");
+            String numero = partes[0].replace("#", "");
+            String nombre = partes[1].toLowerCase();
+
+            Intent i = new Intent(ActivityDetalle.this, ActivityDetalle.class);
+            i.putExtra("nombrePokemon", nombre);
+            i.putExtra("numeroPokemon", numero);
+            i.putExtra("imagenUrl", "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/" + numero + ".png");
+            startActivity(i);
+
+            listaSugerencias.setVisibility(View.GONE);
+        });
+
+        // 🔹 Recuperar datos del Intent
         Intent intent = getIntent();
         nombrePokemon = intent.getStringExtra("nombrePokemon");
         numeroPokemon = intent.getStringExtra("numeroPokemon");
         imagenUrl = intent.getStringExtra("imagenUrl");
 
         if (nombrePokemon != null) {
-            txtNombrePokemon.setText("#" + numeroPokemon + " " + nombrePokemon.toUpperCase());
-            Glide.with(this).load(imagenUrl).into(imgPokemonDetalle);
+            txtNombrePokemon.setText(nombrePokemon.toUpperCase());
+            txtNumeroPokemon.setText("#" + numeroPokemon);
+
             cargarDetallesPokemon(nombrePokemon.toLowerCase());
+
+            // Descargar imagen
+            PokedexApi.descargarImagen(imagenUrl, bitmap -> {
+                if (bitmap != null) imgPokemonDetalle.setImageBitmap(bitmap);
+            });
         } else {
-            txtNombrePokemon.setText("Error: Pokémon no encontrado");
+            txtNombrePokemon.setText("Pokémon no encontrado");
         }
+    }
 
-        // 🔙 Botón volver
-        btnVolverDetalle.setOnClickListener(v -> finish());
 
-        // 🏠 Logo → volver al inicio
-        logoInicioDetalle.setOnClickListener(v -> {
-            Intent i = new Intent(ActivityDetalle.this, ActivityInicio.class);
-            startActivity(i);
+
+    /**
+     * 📦 Cargar todos los detalles del Pokémon
+     */
+    private void cargarDetallesPokemon(String nombre) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
+
+        executor.execute(() -> {
+            try {
+                URL url = new URL("https://pokeapi.co/api/v2/pokemon/" + nombre);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+
+                BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                StringBuilder jsonBuilder = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    jsonBuilder.append(line);
+                }
+                reader.close();
+                conn.disconnect();
+
+                JSONObject json = new JSONObject(jsonBuilder.toString());
+
+                double altura = json.getDouble("height") / 10.0;
+                double peso = json.getDouble("weight") / 10.0;
+                JSONArray habilidades = json.getJSONArray("abilities");
+                String habilidad = habilidades.getJSONObject(0)
+                        .getJSONObject("ability")
+                        .getString("name");
+
+                // Tipos
+                JSONArray tiposArray = json.getJSONArray("types");
+                ArrayList<String> tipos = new ArrayList<>();
+                for (int i = 0; i < tiposArray.length(); i++) {
+                    tipos.add(tiposArray.getJSONObject(i)
+                            .getJSONObject("type")
+                            .getString("name"));
+                }
+
+                Pokemon p = new Pokemon();
+                p.setNombre(nombrePokemon);
+                p.setNumero(Integer.parseInt(numeroPokemon));
+                p.setAltura(altura);
+                p.setPeso(peso);
+                p.setHabilidad(habilidad);
+                p.setTipos(tipos);
+
+                handler.post(() -> {
+                    mostrarDetalles(p);
+                    cargarDebilidades(p.getTipos());
+                });
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
     }
 
     /**
-     * Llama a la API para obtener los detalles del Pokémon
-     */
-    private void cargarDetallesPokemon(String nombre) {
-        PokedexApi.getDetallesPokemon(this, nombre,
-                new Response.Listener<Pokemon>() {
-                    @Override
-                    public void onResponse(Pokemon pokemon) {
-                        mostrarDetalles(pokemon);
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        txtNombrePokemon.setText("Error al cargar datos");
-                    }
-                });
-    }
-
-    /**
-     * Rellena la interfaz con los datos del Pokémon
+     * 🧾 Rellena la interfaz con los datos del Pokémon
      */
     private void mostrarDetalles(Pokemon p) {
-        txtNumeroPokemon.setText("#" + p.getNumero());
         txtAltura.setText("Altura: " + p.getAltura() + " m");
         txtPeso.setText("Peso: " + p.getPeso() + " kg");
         txtSexo.setText("Sexo: ♂ ♀");
-        txtCategoria.setText("Categoría: " + (p.getCategoria() != null ? p.getCategoria() : "-"));
-        txtHabilidad.setText("Habilidad: " + (p.getHabilidad() != null ? p.getHabilidad() : "-"));
-
-        new AsyncTask<String, Void, Bitmap>() {
-            @Override
-            protected Bitmap doInBackground(String... urls) {
-                return PokedexApi.getBitmapFromURL(urls[0]);
-            }
-
-            @Override
-            protected void onPostExecute(Bitmap bitmap) {
-                if (bitmap != null) imgPokemonDetalle.setImageBitmap(bitmap);
-            }
-        }.execute(p.getImagenUrl());
-
+        txtCategoria.setText("Categoría: Semilla");
+        txtHabilidad.setText("Habilidad: " + p.getHabilidad());
         mostrarTipos(p.getTipos());
-        cargarDebilidades(p.getTipos());
     }
 
+    /**
+     * 🟩 Mostrar los tipos del Pokémon con color
+     */
     private void mostrarTipos(ArrayList<String> tipos) {
         contenedorTipos.removeAllViews();
         for (String tipo : tipos) {
@@ -140,43 +238,60 @@ public class ActivityDetalle extends AppCompatActivity {
         }
     }
 
+    /**
+     * ⚡ Cargar debilidades de los tipos
+     */
     private void cargarDebilidades(ArrayList<String> tipos) {
         contenedorDebilidades.removeAllViews();
-        ArrayList<String> debilidadesTotales = new ArrayList<>();
 
-        for (String tipo : tipos) {
-            String url = "https://pokeapi.co/api/v2/type/" + tipo;
-            com.android.volley.RequestQueue queue = com.android.volley.toolbox.Volley.newRequestQueue(this);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
 
-            com.android.volley.toolbox.JsonObjectRequest request = new com.android.volley.toolbox.JsonObjectRequest(
-                    com.android.volley.Request.Method.GET, url, null,
-                    response -> {
-                        try {
-                            JSONArray damageArray = response.getJSONObject("damage_relations")
-                                    .getJSONArray("double_damage_from");
-                            for (int i = 0; i < damageArray.length(); i++) {
-                                String debilidad = damageArray.getJSONObject(i).getString("name");
-                                if (!debilidadesTotales.contains(debilidad)) {
-                                    debilidadesTotales.add(debilidad);
-                                }
-                            }
+        executor.execute(() -> {
+            ArrayList<String> debilidadesTotales = new ArrayList<>();
+            for (String tipo : tipos) {
+                try {
+                    URL url = new URL("https://pokeapi.co/api/v2/type/" + tipo);
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("GET");
 
-                            contenedorDebilidades.removeAllViews();
-                            for (String d : debilidadesTotales) {
-                                TextView chipDeb = crearChip(d);
-                                contenedorDebilidades.addView(chipDeb);
-                            }
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    StringBuilder jsonBuilder = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        jsonBuilder.append(line);
+                    }
+                    reader.close();
+                    conn.disconnect();
 
-                        } catch (JSONException e) {
-                            e.printStackTrace();
+                    JSONObject json = new JSONObject(jsonBuilder.toString());
+                    JSONArray damageArray = json.getJSONObject("damage_relations")
+                            .getJSONArray("double_damage_from");
+
+                    for (int i = 0; i < damageArray.length(); i++) {
+                        String debilidad = damageArray.getJSONObject(i).getString("name");
+                        if (!debilidadesTotales.contains(debilidad)) {
+                            debilidadesTotales.add(debilidad);
                         }
-                    },
-                    error -> {}
-            );
-            queue.add(request);
-        }
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            handler.post(() -> {
+                for (String d : debilidadesTotales) {
+                    TextView chipDeb = crearChip(d);
+                    contenedorDebilidades.addView(chipDeb);
+                }
+            });
+        });
     }
 
+    /**
+     * 🎨 Crea un chip colorido según el tipo
+     */
     private TextView crearChip(String texto) {
         TextView chip = new TextView(this);
         chip.setText(texto.toUpperCase());
@@ -194,29 +309,32 @@ public class ActivityDetalle extends AppCompatActivity {
         return chip;
     }
 
+    /**
+     * 🎨 Devuelve color de fondo según tipo
+     */
     private GradientDrawable crearFondoTipo(String tipo) {
         GradientDrawable fondo = new GradientDrawable();
         fondo.setCornerRadius(50);
 
         Map<String, String> colores = new HashMap<>();
-        colores.put("planta", "#78C850");
-        colores.put("fuego", "#F08030");
-        colores.put("agua", "#6890F0");
-        colores.put("bicho", "#A8B820");
+        colores.put("grass", "#78C850");
+        colores.put("fire", "#F08030");
+        colores.put("water", "#6890F0");
+        colores.put("bug", "#A8B820");
         colores.put("normal", "#A8A878");
-        colores.put("electrico", "#F8D030");
-        colores.put("tierra", "#E0C068");
-        colores.put("hada", "#EE99AC");
-        colores.put("lucha", "#C03028");
-        colores.put("psiquico", "#F85888");
-        colores.put("roca", "#B8A038");
-        colores.put("fantasma", "#705898");
-        colores.put("hielo", "#98D8D8");
+        colores.put("electric", "#F8D030");
+        colores.put("ground", "#E0C068");
+        colores.put("fairy", "#EE99AC");
+        colores.put("fighting", "#C03028");
+        colores.put("psychic", "#F85888");
+        colores.put("rock", "#B8A038");
+        colores.put("ghost", "#705898");
+        colores.put("ice", "#98D8D8");
         colores.put("dragon", "#7038F8");
-        colores.put("veneno", "#A040A0");
-        colores.put("acero", "#B8B8D0");
-        colores.put("siniestro", "#705848");
-        colores.put("volador", "#A890F0");
+        colores.put("poison", "#A040A0");
+        colores.put("steel", "#B8B8D0");
+        colores.put("dark", "#705848");
+        colores.put("flying", "#A890F0");
 
         String color = colores.get(tipo.toLowerCase());
         if (color == null) color = "#AAAAAA";

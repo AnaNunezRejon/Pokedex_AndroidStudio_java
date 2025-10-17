@@ -21,6 +21,7 @@ public class Pokemon {
         this.imagenUrl = url;
     }
 
+
     // Getters y setters
     public String getNombre() {
         return nombre;

@@ -3,9 +3,20 @@ package com.example.intentopokedex3.view;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.content.Intent;
-import android.widget.TextView;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ListView;
+import android.widget.TextView;
+
 import com.example.intentopokedex3.R;
+import com.example.intentopokedex3.controller.PokedexApi;
+import com.example.intentopokedex3.model.Pokemon;
+
+import java.util.ArrayList;
 
 public class ActivityTipos extends AppCompatActivity {
 
@@ -20,6 +31,11 @@ public class ActivityTipos extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tipos);
+
+        // 🔹 Referencias UI
+        btnVolverTipos = findViewById(R.id.btnVolverTipos);
+        logoInicioTipos = findViewById(R.id.btnLogoInicio);
+        EditText inputBuscarTipos = findViewById(R.id.inputBuscarTipos);
 
         // 🔹 Botones de tipo (TextView)
         btnPlanta = findViewById(R.id.btnPlanta);
@@ -41,20 +57,16 @@ public class ActivityTipos extends AppCompatActivity {
         btnDragon = findViewById(R.id.btnDragon);
         btnVolador = findViewById(R.id.btnVolador);
 
-        // 🔙 Botones superiores e inferiores (ImageButton)
-        btnVolverTipos = findViewById(R.id.btnVolverTipos);
-        logoInicioTipos = findViewById(R.id.btnLogoInicio);
-
-        // 🔹 Acción del botón Volver
+        // 🔙 Botón volver
         btnVolverTipos.setOnClickListener(v -> finish());
 
-        // 🔹 Logo inferior → vuelve al inicio
+        // 🏠 Logo inferior → volver al inicio
         logoInicioTipos.setOnClickListener(v -> {
             Intent i = new Intent(ActivityTipos.this, ActivityInicio.class);
             startActivity(i);
         });
 
-        // 🌿 Ejemplo: abrir lista según el tipo seleccionado
+        // 🌿 Asignar acciones a los botones de tipo
         asignarAccionTipo(btnPlanta, "planta");
         asignarAccionTipo(btnAgua, "agua");
         asignarAccionTipo(btnFuego, "fuego");
@@ -73,6 +85,58 @@ public class ActivityTipos extends AppCompatActivity {
         asignarAccionTipo(btnPsiquico, "psiquico");
         asignarAccionTipo(btnDragon, "dragon");
         asignarAccionTipo(btnVolador, "volador");
+
+        // 🔍 BUSCADOR
+        ListView listaSugerencias = findViewById(R.id.listaSugerencias);
+        ArrayList<String> nombresPokemon = new ArrayList<>();
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, nombresPokemon);
+        listaSugerencias.setAdapter(adapter);
+
+        // Escucha el texto del buscador
+        inputBuscarTipos.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String texto = s.toString().trim().toLowerCase();
+
+                if (texto.length() >= 1) {
+                    PokedexApi.buscarPorNombre(texto, lista -> {
+                        runOnUiThread(() -> {
+                            nombresPokemon.clear();
+                            for (Pokemon p : lista) {
+                                nombresPokemon.add("#" + p.getNumero() + " " + p.getNombre().toUpperCase());
+                            }
+                            adapter.notifyDataSetChanged();
+                            listaSugerencias.setVisibility(View.VISIBLE);
+                        });
+                    });
+                } else {
+                    listaSugerencias.setVisibility(View.GONE);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        // Cuando el usuario pulsa sobre un Pokémon de la lista
+        listaSugerencias.setOnItemClickListener((parent, view, position, id) -> {
+            String textoSeleccionado = nombresPokemon.get(position);
+            // Ejemplo: "#1 BULBASAUR"
+            String[] partes = textoSeleccionado.split(" ");
+            String numero = partes[0].replace("#", "");
+            String nombre = partes[1].toLowerCase();
+
+            Intent i = new Intent(ActivityTipos.this, ActivityDetalle.class);
+            i.putExtra("nombrePokemon", nombre);
+            i.putExtra("numeroPokemon", numero);
+            i.putExtra("imagenUrl", "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/" + numero + ".png");
+            startActivity(i);
+
+            listaSugerencias.setVisibility(View.GONE);
+        });
     }
 
     // 🔧 Método auxiliar para simplificar el código

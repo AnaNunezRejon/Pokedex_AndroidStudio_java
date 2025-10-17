@@ -1,45 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8BBD0"
-    android:paddingTop="16dp"
-    android:paddingBottom="8dp"
     tools:context=".view.ActivityTipos">
 
-    <!-- 🔹 Barra superior con botón volver y buscador -->
-    <LinearLayout
-        android:id="@+id/barraSuperior"
+    <!-- 🌸 CONTENIDO PRINCIPAL -->
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginHorizontal="12dp"
-        android:layout_marginBottom="12dp">
+        android:layout_height="match_parent"
+        android:background="@drawable/fondo_pokedex"
+        android:paddingTop="16dp"
+        android:paddingBottom="8dp">
 
-        <ImageButton
-            android:id="@+id/btnVolverTipos"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:src="@drawable/btn_volver"
-            android:background="@null"
-            android:contentDescription="Volver"
-            android:layout_marginEnd="10dp" />
+        <!-- 🔹 Barra superior -->
+        <LinearLayout
+            android:id="@+id/barraSuperior"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginBottom="12dp">
 
-        <EditText
-            android:id="@+id/inputBuscarTipos"
-            android:layout_width="0dp"
-            android:layout_height="45dp"
-            android:layout_weight="1"
-            android:hint="Buscar Pokémon..."
-            android:background="@drawable/rounded_search_background_white"
-            android:paddingStart="16dp"
-            android:textColor="@android:color/black"
-            android:textColorHint="#888"
-            android:singleLine="true"
-            android:elevation="3dp" />
-    </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/btnVolverTipos"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:background="@drawable/btn_volver"
+                android:contentDescription="Volver"
+                android:padding="8dp"
+                android:scaleType="centerInside" />
+
+            <EditText
+                android:id="@+id/inputBuscarTipos"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:hint="Buscar Pokémon..."
+                android:background="@drawable/rounded_search_background_white"
+                android:textColorHint="#888"
+                android:textColor="#000"
+                android:paddingHorizontal="15dp"
+                android:layout_marginLeft="8dp" />
+        </LinearLayout>
 
     <!-- 🟣 Contenedor de tipos -->
     <GridLayout
@@ -350,4 +355,19 @@
 
 </RelativeLayout>
 
-
+    <!-- 🌟 LISTVIEW FLOTANTE (encima del contenido) -->
+    <ListView
+        android:id="@+id/listaSugerencias"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="75dp"
+        android:background="#E6FFFFFF"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="8dp"
+        android:elevation="16dp"
+        android:visibility="gone"
+        android:padding="10dp"
+        android:clipToOutline="true"
+        android:outlineProvider="background" />
+</FrameLayout>

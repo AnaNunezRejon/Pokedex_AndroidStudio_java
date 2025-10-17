@@ -1,70 +1,98 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/fondo_pokedex"
-    android:paddingTop="20dp">
+    tools:context=".view.ActivityLista">
 
-    <!-- 🔹 Barra superior -->
-    <LinearLayout
-        android:id="@+id/barraSuperior"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingHorizontal="12dp">
-
-        <ImageButton
-            android:id="@+id/btnVolverLista"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
-            android:background="@drawable/btn_volver"
-            android:contentDescription="Volver"
-            android:padding="8dp"
-            android:scaleType="centerInside" />
-
-        <EditText
-            android:id="@+id/buscarPokemon"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
-            android:hint="Buscar Pokémon..."
-            android:background="@drawable/rounded_search_background_white"
-            android:textColorHint="#888"
-            android:textColor="#000"
-            android:paddingHorizontal="15dp"
-            android:layout_marginLeft="8dp" />
-    </LinearLayout>
-
-    <!-- 🔹 Scroll con el grid -->
-    <ScrollView
-        android:id="@+id/scrollPokemons"
+    <!-- 🔹 Contenido principal -->
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/barraSuperior"
-        android:layout_above="@id/btnLogoInicioLista"
-        android:fillViewport="true">
+        android:background="@drawable/fondo_pokedex"
+        android:paddingTop="20dp">
 
-        <GridLayout
-            android:id="@+id/gridPokemons"
+        <!-- 🔹 Barra superior -->
+        <LinearLayout
+            android:id="@+id/barraSuperior"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="12dp"
-            android:columnCount="2"
-            android:useDefaultMargins="true"
-            android:alignmentMode="alignMargins"
-            android:gravity="center" />
-    </ScrollView>
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="12dp">
 
-    <!-- 🔹 Logo inferior -->
-    <ImageButton
-        android:id="@+id/btnLogoInicioLista"
+            <ImageButton
+                android:id="@+id/btnVolverLista"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:background="@drawable/btn_volver"
+                android:contentDescription="Volver"
+                android:padding="8dp"
+                android:scaleType="centerInside" />
+
+            <EditText
+                android:id="@+id/buscarPokemon"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:hint="Buscar Pokémon..."
+                android:background="@drawable/rounded_search_background_white"
+                android:textColorHint="#888"
+                android:textColor="#000"
+                android:paddingHorizontal="15dp"
+                android:layout_marginLeft="8dp" />
+        </LinearLayout>
+
+        <!-- 🔹 Scroll con el grid -->
+        <ScrollView
+            android:id="@+id/scrollPokemons"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/barraSuperior"
+            android:layout_above="@id/btnLogoInicioLista"
+            android:fillViewport="true">
+
+            <!-- 🔸 Grid con 2 columnas -->
+            <GridLayout
+                android:id="@+id/gridPokemons"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="2"
+                android:alignmentMode="alignMargins"
+                android:useDefaultMargins="true"
+                android:padding="12dp"
+                android:rowOrderPreserved="false"
+                android:gravity="center" />
+        </ScrollView>
+
+        <!-- 🔹 Logo inferior -->
+        <ImageButton
+            android:id="@+id/btnLogoInicioLista"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="6dp"
+            android:src="@drawable/logo_pokedex"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
+            android:background="@android:color/transparent"
+            android:contentDescription="Volver al inicio"/>
+    </RelativeLayout>
+
+    <!-- 🌟 LISTVIEW FLOTANTE ENCIMA -->
+    <ListView
+        android:id="@+id/listaSugerencias"
         android:layout_width="match_parent"
-        android:layout_height="65dp"
-        android:layout_alignParentBottom="true"
-        android:src="@drawable/logo_pokedex"
-        android:background="@android:color/transparent"
-        android:scaleType="fitCenter"
-        android:contentDescription="Inicio" />
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="80dp"
+        android:background="#F8F8F8"
+        android:divider="@android:color/darker_gray"
+        android:dividerHeight="1dp"
+        android:elevation="16dp"
+        android:visibility="gone"
+        android:padding="8dp"
+        android:clipToOutline="true"
+        android:outlineProvider="background" />
 
-</RelativeLayout>
+</FrameLayout>

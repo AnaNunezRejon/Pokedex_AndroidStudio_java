@@ -1,175 +1,215 @@
 package com.example.intentopokedex3.view;
 
-import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.graphics.Color;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.view.Gravity;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
-import com.bumptech.glide.Glide;
-import com.example.intentopokedex3.R;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.intentopokedex3.R;
+import com.example.intentopokedex3.controller.PokedexApi;
+import com.example.intentopokedex3.model.Pokemon;
+
+import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ActivityLista extends AppCompatActivity {
 
-    GridLayout gridPokemons;
-    ImageButton btnVolverLista, btnLogoInicioLista;
-    EditText buscarPokemon;
-    String tipoSeleccionado;
+    private GridLayout gridPokemons;
+    private ImageButton btnVolverLista, btnLogoInicioLista;
+    private EditText buscarPokemon;
+    private String tipoSeleccionado;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_lista);
 
+        // 🔹 Referencias UI
         gridPokemons = findViewById(R.id.gridPokemons);
         btnVolverLista = findViewById(R.id.btnVolverLista);
         btnLogoInicioLista = findViewById(R.id.btnLogoInicioLista);
         buscarPokemon = findViewById(R.id.buscarPokemon);
 
-        // Recibimos el tipo desde la activity anterior
+        // ✅ Recuperar tipo seleccionado
         tipoSeleccionado = getIntent().getStringExtra("tipo");
+        if (tipoSeleccionado == null) tipoSeleccionado = "fire";
 
         // 🔙 Botón volver
         btnVolverLista.setOnClickListener(v -> finish());
 
-        // 🏠 Logo inferior
+        // 🏠 Logo inferior → volver al inicio
         btnLogoInicioLista.setOnClickListener(v -> {
             Intent i = new Intent(ActivityLista.this, ActivityInicio.class);
             startActivity(i);
         });
 
-        // Llamada a la API
-        new ObtenerPokemonsPorTipo().execute("https://pokeapi.co/api/v2/type/" + tipoSeleccionado);
-    }
+        // 🔍 BUSCADOR FLOTANTE
+        ListView listaSugerencias = findViewById(R.id.listaSugerencias);
+        ArrayList<String> nombresPokemon = new ArrayList<>();
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, nombresPokemon);
+        listaSugerencias.setAdapter(adapter);
 
-    /**
-     * 🔹 AsyncTask que obtiene los Pokémon del tipo seleccionado
-     */
-    private class ObtenerPokemonsPorTipo extends AsyncTask<String, Void, JSONArray> {
+        buscarPokemon.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String texto = s.toString().trim().toLowerCase();
 
-        @Override
-        protected JSONArray doInBackground(String... urls) {
-            StringBuilder resultado = new StringBuilder();
-            try {
-                URL url = new URL(urls[0]);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("GET");
-
-                BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                String linea;
-                while ((linea = reader.readLine()) != null) {
-                    resultado.append(linea);
+                if (!texto.isEmpty()) {
+                    PokedexApi.buscarPorNombre(texto, lista -> runOnUiThread(() -> {
+                        nombresPokemon.clear();
+                        for (Pokemon p : lista) {
+                            nombresPokemon.add("#" + p.getNumero() + " " + p.getNombre().toUpperCase());
+                        }
+                        adapter.notifyDataSetChanged();
+                        listaSugerencias.setVisibility(View.VISIBLE);
+                    }));
+                } else {
+                    listaSugerencias.setVisibility(View.GONE);
                 }
-                reader.close();
-
-                JSONObject json = new JSONObject(resultado.toString());
-                return json.getJSONArray("pokemon"); // lista de pokémon
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
             }
-        }
-
-        @Override
-        protected void onPostExecute(JSONArray listaPokemons) {
-            if (listaPokemons == null) return;
-
-            try {
-                // Limitar para que no sature el diseño (máx 30)
-                int cantidad = Math.min(listaPokemons.length(), 30);
-
-                for (int i = 0; i < cantidad; i++) {
-                    JSONObject pokeObj = listaPokemons.getJSONObject(i).getJSONObject("pokemon");
-                    String nombre = pokeObj.getString("name");
-                    String url = pokeObj.getString("url");
-
-                    // obtener número (viene al final de la URL)
-                    String[] partes = url.split("/");
-                    String numero = partes[partes.length - 1];
-
-                    // construir imagen oficial
-                    String imagenUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/" + numero + ".png";
-
-                    // Añadir a la cuadrícula
-                    addPokemon("#" + numero, capitalize(nombre), imagenUrl);
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    /**
-     * 🔹 Crea una tarjeta visual para cada Pokémon
-     */
-    private void addPokemon(String numero, String nombre, String imagenUrl) {
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setGravity(Gravity.CENTER);
-        layout.setPadding(8, 8, 8, 8);
-        layout.setBackgroundResource(R.drawable.fondo_caja_detalle);
-        layout.setClickable(true);
-        layout.setFocusable(true);
-
-        // 🔹 Imagen
-        ImageView img = new ImageView(this);
-        LinearLayout.LayoutParams imgParams = new LinearLayout.LayoutParams(220, 220);
-        img.setLayoutParams(imgParams);
-        img.setAdjustViewBounds(true);
-        Glide.with(this).load(imagenUrl).into(img);
-
-        // 🔹 Texto
-        TextView txt = new TextView(this);
-        txt.setText(numero + " " + nombre);
-        txt.setTextColor(Color.WHITE);
-        txt.setGravity(Gravity.CENTER);
-        txt.setTextSize(13);
-        txt.setPadding(0, 10, 0, 10);
-
-        // 🔹 Añadir vista al layout
-        layout.addView(img);
-        layout.addView(txt);
-
-        // 🔹 Al tocar el Pokémon → abrir ActivityDetalle
-        layout.setOnClickListener(v -> {
-            Intent intent = new Intent(ActivityLista.this, ActivityDetalle.class);
-            intent.putExtra("nombrePokemon", nombre);
-            intent.putExtra("numeroPokemon", numero.replace("#", ""));
-            intent.putExtra("imagenUrl", imagenUrl);
-            startActivity(intent);
+            @Override public void afterTextChanged(Editable s) {}
         });
 
-        // 🔹 Ajustes del GridLayout
-        GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-        params.width = 0;
-        params.height = GridLayout.LayoutParams.WRAP_CONTENT;
-        params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
-        params.setMargins(16, 16, 16, 16);
-        layout.setLayoutParams(params);
+        // 🔹 Click en sugerencia → Ir a detalle
+        listaSugerencias.setOnItemClickListener((parent, view, position, id) -> {
+            String textoSeleccionado = nombresPokemon.get(position);
+            // Ejemplo: "#1 BULBASAUR"
+            String[] partes = textoSeleccionado.split(" ");
+            String numero = partes[0].replace("#", "");
+            String nombre = partes[1].toLowerCase();
 
-        gridPokemons.addView(layout);
+            Intent i = new Intent(ActivityLista.this, ActivityDetalle.class);
+            i.putExtra("nombrePokemon", nombre);
+            i.putExtra("numeroPokemon", numero);
+            // 🔸 URL estándar de imagen
+            i.putExtra("imagenUrl", "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/" + numero + ".png");
+            startActivity(i);
+
+            listaSugerencias.setVisibility(View.GONE);
+        });
+
+        // ⚙️ Cargar lista principal
+        cargarPokemonsPorTipo(tipoSeleccionado);
     }
 
-    /**
-     * 🔹 Convierte la primera letra a mayúscula
-     */
-    private String capitalize(String texto) {
-        if (texto == null || texto.length() == 0) return "";
-        return texto.substring(0, 1).toUpperCase() + texto.substring(1);
+    private int offset = 0;  // Control de posición
+    private final int LIMITE = 30;
+    private boolean cargando = false; // Evita doble clics
+    private String tipoActual;
+    private ArrayList<Pokemon> listaTotal = new ArrayList<>();
+
+    private void cargarPokemonsPorTipo(String tipo) {
+        tipoActual = tipo;
+        cargarMasPokemons(); // Primera carga
+    }
+
+    private void cargarMasPokemons() {
+        if (cargando) return;
+        cargando = true;
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
+
+        executor.execute(() -> {
+            ArrayList<Pokemon> nuevos = PokedexApi.obtenerPokemonPorTipoSync(tipoActual, offset, LIMITE);
+            handler.post(() -> {
+                mostrarPokemons(nuevos);
+                offset += LIMITE;
+                cargando = false;
+            });
+        });
+    }
+
+    private void mostrarPokemons(ArrayList<Pokemon> lista) {
+        // Si es la primera vez, limpiamos
+        if (offset == 0) {
+            gridPokemons.removeAllViews();
+            listaTotal.clear();
+        }
+
+        listaTotal.addAll(lista);
+
+        for (Pokemon p : lista) {
+            LinearLayout card = new LinearLayout(this);
+            card.setOrientation(LinearLayout.VERTICAL);
+            card.setPadding(10, 10, 10, 10);
+            card.setBackgroundResource(R.drawable.fondo_item_pokemon);
+            card.setElevation(8f);
+
+            GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+            params.width = (int) (getResources().getDisplayMetrics().widthPixels / 2.2);
+            params.setMargins(10, 10, 10, 10);
+            card.setLayoutParams(params);
+
+            // Imagen
+            ImageView imagen = new ImageView(this);
+            imagen.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, 300));
+            imagen.setScaleType(ImageView.ScaleType.FIT_CENTER);
+
+            PokedexApi.descargarImagen(p.getImagenUrl(), imagen::setImageBitmap);
+
+            // Nombre
+            TextView nombre = new TextView(this);
+            nombre.setText("#" + p.getNumero() + " " + p.getNombre().toUpperCase());
+            nombre.setTextSize(16);
+            nombre.setPadding(0, 8, 0, 8);
+            nombre.setGravity(android.view.Gravity.CENTER);
+            nombre.setTextColor(getResources().getColor(android.R.color.white));
+
+            card.addView(imagen);
+            card.addView(nombre);
+
+            card.setOnClickListener(v -> {
+                Intent i = new Intent(ActivityLista.this, ActivityDetalle.class);
+                i.putExtra("nombrePokemon", p.getNombre());
+                i.putExtra("numeroPokemon", String.valueOf(p.getNumero()));
+                i.putExtra("imagenUrl", p.getImagenUrl());
+                startActivity(i);
+            });
+
+            gridPokemons.addView(card);
+        }
+
+        // 🔹 Añadir o actualizar el botón “Ver más”
+        gridPokemons.post(() -> {
+            // Buscar si hay un botón anterior (por ID generado)
+            View botonExistente = gridPokemons.findViewWithTag("btnVerMas");
+            if (botonExistente != null) gridPokemons.removeView(botonExistente);
+
+            Button btnVerMas = new Button(this);
+            btnVerMas.setTag("btnVerMas"); // ✅ usamos tag en lugar de R.id
+            btnVerMas.setText("Ver más Pokémon");
+            btnVerMas.setBackgroundResource(R.drawable.rounded_search_background_white);
+            btnVerMas.setTextColor(Color.BLACK);
+            btnVerMas.setPadding(20, 10, 20, 10);
+            btnVerMas.setOnClickListener(v -> cargarMasPokemons());
+
+            GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+            params.width = GridLayout.LayoutParams.MATCH_PARENT;
+            params.height = GridLayout.LayoutParams.WRAP_CONTENT;
+            params.setMargins(20, 30, 20, 40);
+            params.columnSpec = GridLayout.spec(0, 2);
+            btnVerMas.setLayoutParams(params);
+
+            gridPokemons.addView(btnVerMas);
+        });
     }
 }
