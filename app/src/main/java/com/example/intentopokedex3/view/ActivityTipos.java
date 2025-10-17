@@ -18,26 +18,80 @@ import com.example.intentopokedex3.model.Pokemon;
 
 import java.util.ArrayList;
 
+/**
+ * Pantalla que muestra todos los tipos de Pokemon.
+ * Permite seleccionar un tipo para ver su lista o buscar por nombre.
+ *
+ *
+ *FLUJO TIPOS:
+ * onCreate()
+ *    ↳ carga el layout activity_tipos.xml
+ *    ↳ conecta todos los botones de tipo (agua, fuego, planta, etc.)
+ *    ↳ configura el boton volver y el logo inferior
+ *
+ *    🔹 asignarAccionTipo() → metodo auxiliar para cada tipo
+ *         ↳ crea un Intent hacia ActivityLista
+ *         ↳ traduce el tipo español a ingles (traducirTipo())
+ *         ↳ pasa el tipo a la siguiente pantalla (putExtra("tipo", tipoIngles))
+ *
+ *    🔹 traducirTipo() → convierte texto como "agua" → "water"
+ *
+ *    🔹 buscador:
+ *         ↳ inputBuscarTipos.addTextChangedListener()
+ *              → llama a PokedexApi.buscarPorNombre(texto)
+ *                   ↳ obtiene una lista con coincidencias
+ *                   ↳ muestra los resultados en listaSugerencias (ListView)
+ *         ↳ setOnItemClickListener()
+ *              → obtiene el nombre y numero del pokemon seleccionado
+ *              → abre ActivityDetalle con esos datos
+ *
+ * 🔹 Objetivo:
+ *    Permite elegir un tipo de pokemon o buscar uno por nombre.
+ *    Es el menu intermedio antes de la lista principal.
+ *
+ */
 public class ActivityTipos extends AppCompatActivity {
 
-    TextView btnPlanta, btnAgua, btnFuego, btnTierra, btnElectrico,
+    // -------------------------------------------------------------------------
+    // Variables de interfaz
+    // -------------------------------------------------------------------------
+    private TextView btnPlanta, btnAgua, btnFuego, btnTierra, btnElectrico,
             btnNormal, btnVeneno, btnHada, btnAcero,
             btnBicho, btnHielo, btnRoca, btnLucha, btnSiniestro,
             btnFantasma, btnPsiquico, btnDragon, btnVolador;
 
-    ImageButton btnVolverTipos, logoInicioTipos;
+    private ImageButton botonVolver, botonLogoInicio;
+    private EditText campoBuscar;
+    private ListView listaSugerencias;
 
+    // -------------------------------------------------------------------------
+    // 🔹 Metodo principal al crear la pantalla
+    // -------------------------------------------------------------------------
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tipos);
 
-        // 🔹 Referencias UI
-        btnVolverTipos = findViewById(R.id.btnVolverTipos);
-        logoInicioTipos = findViewById(R.id.btnLogoInicio);
-        EditText inputBuscarTipos = findViewById(R.id.inputBuscarTipos);
+        // Referencias de la interfaz
+        botonVolver = findViewById(R.id.btnVolverTipos);
+        botonLogoInicio = findViewById(R.id.btnLogoInicio);
+        campoBuscar = findViewById(R.id.inputBuscarTipos);
+        listaSugerencias = findViewById(R.id.listaSugerencias);
 
-        // 🔹 Botones de tipo (TextView)
+        // Inicializar botones de tipo
+        inicializarBotonesTipos();
+
+        // Configurar botones principales
+        configurarBotones();
+
+        // Configurar buscador de Pokemon
+        configurarBuscador();
+    }
+
+    // -------------------------------------------------------------------------
+    // 🔹 Metodo que inicializa todos los botones de tipo
+    // -------------------------------------------------------------------------
+    private void inicializarBotonesTipos() {
         btnPlanta = findViewById(R.id.btnPlanta);
         btnAgua = findViewById(R.id.btnAgua);
         btnFuego = findViewById(R.id.btnFuego);
@@ -57,16 +111,7 @@ public class ActivityTipos extends AppCompatActivity {
         btnDragon = findViewById(R.id.btnDragon);
         btnVolador = findViewById(R.id.btnVolador);
 
-        // 🔙 Botón volver
-        btnVolverTipos.setOnClickListener(v -> finish());
-
-        // 🏠 Logo inferior → volver al inicio
-        logoInicioTipos.setOnClickListener(v -> {
-            Intent i = new Intent(ActivityTipos.this, ActivityInicio.class);
-            startActivity(i);
-        });
-
-        // 🌿 Asignar acciones a los botones de tipo
+        // Asignar accion a cada boton
         asignarAccionTipo(btnPlanta, "planta");
         asignarAccionTipo(btnAgua, "agua");
         asignarAccionTipo(btnFuego, "fuego");
@@ -85,30 +130,52 @@ public class ActivityTipos extends AppCompatActivity {
         asignarAccionTipo(btnPsiquico, "psiquico");
         asignarAccionTipo(btnDragon, "dragon");
         asignarAccionTipo(btnVolador, "volador");
+    }
 
-        // 🔍 BUSCADOR
-        ListView listaSugerencias = findViewById(R.id.listaSugerencias);
+    // -------------------------------------------------------------------------
+    // 🔹 Metodo que configura los botones volver y logo inicio
+    // -------------------------------------------------------------------------
+    private void configurarBotones() {
+        // Volver a la pantalla anterior
+        botonVolver.setOnClickListener(v -> finish());
+
+        // Logo inferior -> volver a la pantalla de inicio
+        botonLogoInicio.setOnClickListener(v -> {
+            Intent i = new Intent(ActivityTipos.this, ActivityInicio.class);
+            startActivity(i);
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    // 🔹 Metodo que configura el buscador flotante
+    // -------------------------------------------------------------------------
+    /**
+     * Este metodo permite buscar Pokemon por nombre.
+     * Llama a {@link PokedexApi#buscarPorNombre(String, PokedexApi.OnPokemonListReady)}
+     * y muestra los resultados en una lista flotante.
+     */
+    private void configurarBuscador() {
         ArrayList<String> nombresPokemon = new ArrayList<>();
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, nombresPokemon);
-        listaSugerencias.setAdapter(adapter);
+        ArrayAdapter<String> adaptador = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, nombresPokemon);
+        listaSugerencias.setAdapter(adaptador);
 
-        // Escucha el texto del buscador
-        inputBuscarTipos.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+        // Escucha de texto del buscador
+        campoBuscar.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 String texto = s.toString().trim().toLowerCase();
 
                 if (texto.length() >= 1) {
+                    // Llamada a la API de busqueda
                     PokedexApi.buscarPorNombre(texto, lista -> {
                         runOnUiThread(() -> {
                             nombresPokemon.clear();
                             for (Pokemon p : lista) {
                                 nombresPokemon.add("#" + p.getNumero() + " " + p.getNombre().toUpperCase());
                             }
-                            adapter.notifyDataSetChanged();
+                            adaptador.notifyDataSetChanged();
                             listaSugerencias.setVisibility(View.VISIBLE);
                         });
                     });
@@ -117,14 +184,12 @@ public class ActivityTipos extends AppCompatActivity {
                 }
             }
 
-            @Override
-            public void afterTextChanged(Editable s) {}
+            @Override public void afterTextChanged(Editable s) {}
         });
 
-        // Cuando el usuario pulsa sobre un Pokémon de la lista
+        // Al pulsar un Pokemon de la lista se abre su detalle
         listaSugerencias.setOnItemClickListener((parent, view, position, id) -> {
             String textoSeleccionado = nombresPokemon.get(position);
-            // Ejemplo: "#1 BULBASAUR"
             String[] partes = textoSeleccionado.split(" ");
             String numero = partes[0].replace("#", "");
             String nombre = partes[1].toLowerCase();
@@ -139,7 +204,14 @@ public class ActivityTipos extends AppCompatActivity {
         });
     }
 
-    // 🔧 Método auxiliar para simplificar el código
+    // -------------------------------------------------------------------------
+    // 🔹 Metodo que asigna la accion a cada boton de tipo
+    // -------------------------------------------------------------------------
+    /**
+     * Al pulsar un tipo se abre {@link ActivityLista} con el tipo seleccionado.
+     * Este metodo llama internamente a {@link #traducirTipo(String)} para convertir
+     * el nombre al ingles (la API de PokeAPI solo acepta tipos en ingles).
+     */
     private void asignarAccionTipo(TextView boton, String tipoEspanol) {
         String tipoIngles = traducirTipo(tipoEspanol);
 
@@ -150,13 +222,20 @@ public class ActivityTipos extends AppCompatActivity {
         });
     }
 
+    // -------------------------------------------------------------------------
+    // 🔹 Metodo auxiliar que traduce los nombres de tipo al ingles
+    // -------------------------------------------------------------------------
+    /**
+     * Este metodo se usa en {@link #asignarAccionTipo(TextView, String)}.
+     * Convierte el nombre en español al formato ingles usado por la API.
+     */
     private String traducirTipo(String tipo) {
         switch (tipo) {
             case "planta": return "grass";
             case "fuego": return "fire";
             case "agua": return "water";
             case "tierra": return "ground";
-            case "eléctrico": return "electric";
+            case "electrico": return "electric";
             case "hielo": return "ice";
             case "roca": return "rock";
             case "lucha": return "fighting";

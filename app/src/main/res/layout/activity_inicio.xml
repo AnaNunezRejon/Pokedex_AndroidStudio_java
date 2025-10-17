@@ -11,7 +11,7 @@
         android:id="@+id/btnIrATipos"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:src="@drawable/fondo_pokedex_uno"
+        android:src="@drawable/fondo_pokedex_dos"
         android:background="@null"
         android:scaleType="fitXY"
         android:contentDescription="Ir a selección de tipos" />

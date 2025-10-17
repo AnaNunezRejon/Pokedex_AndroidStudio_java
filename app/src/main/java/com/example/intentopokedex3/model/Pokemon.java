@@ -2,6 +2,27 @@ package com.example.intentopokedex3.model;
 
 import java.util.ArrayList;
 
+/**
+ * Clase modelo del objeto Pokemon
+ *
+ * Atributos:
+ *    nombre       → nombre del pokemon
+ *    numero       → numero de la pokedex
+ *    urlImagen    → direccion del sprite
+ *    tipos        → lista de tipos
+ *    altura       → en metros
+ *    peso         → en kg
+ *    categoria    → especie o categoria (opcional)
+ *    habilidad    → habilidad principal
+ *
+ * Metodos:
+ *    • Getters y Setters → usados por PokedexApi y las Activities
+ *    • Constructores vacio y rapido
+ *
+ * 🔹 Objetivo:
+ *    Representar cada Pokemon como un objeto reutilizable
+ *    que se pasa entre metodos y pantallas.
+ */
 public class Pokemon {
 
     private String nombre;

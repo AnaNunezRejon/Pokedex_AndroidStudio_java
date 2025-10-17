@@ -20,62 +20,119 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Controlador PokeAPI sin librerías externas.
- * Usa ExecutorService + Handler (sustituto moderno de AsyncTask).
+ * Controlador de conexion con la PokeAPI.
+ * Se encarga de descargar datos e imagenes de los Pokemon.
+ *
+ * Usa hilos (ExecutorService) y Handler para no bloquear la interfaz.
+ *
+ * FLUJO CONTROLLER:
+ * obtenerPokemonPorTipo(tipo, listener)
+ *    → asincrono: lanza hilo, llama a obtenerPokemonPorTipoSync(tipo)
+ *    ↳ devuelve lista al listener (callback)
+ *
+ * obtenerPokemonPorTipoSync(tipo)
+ *    → peticion a "https://pokeapi.co/api/v2/type/{tipo}"
+ *    ↳ obtiene lista de URLs de pokemons de ese tipo
+ *    ↳ por cada uno llama a obtenerDetallePokemon(url)
+ *    ↳ devuelve hasta 30 pokemons con datos basicos
+ *
+ * obtenerPokemonPorTipoSync(tipo, offset, limite)
+ *    → version con paginacion manual
+ *    ↳ usa offset y limite para cargar bloques de pokemons
+ *    ↳ tambien llama a obtenerDetallePokemon()
+ *
+ * obtenerDetallePokemon(url)
+ *    → peticion directa a la URL del pokemon
+ *    ↳ obtiene nombre, id, sprite, tipos, altura, peso, habilidad
+ *    ↳ devuelve un objeto Pokemon completo
+ *
+ * buscarPorNombre(texto, listener)
+ *    → busca coincidencias en "https://pokeapi.co/api/v2/pokemon?limit=1025"
+ *    ↳ filtra nombres que empiecen por el texto
+ *    ↳ por cada uno llama a obtenerDetallePokemon(url)
+ *    ↳ devuelve lista al listener
+ *
+ * descargarImagen(url, listener)
+ *    → descarga un sprite desde su URL
+ *    ↳ decodifica a Bitmap
+ *    ↳ devuelve la imagen en el hilo principal
+ *
+ * 🔹 Objetivo:
+ *    Controla toda la comunicacion con la PokeAPI:
+ *    • Listas por tipo
+ *    • Busqueda por nombre
+ *    • Detalles individuales
+ *    • Descarga de imagenes
+ *
  */
 public class PokedexApi {
 
+    // -------------------------------------------------------------------------
+    // URL base de la API
+    // -------------------------------------------------------------------------
     private static final String BASE_URL = "https://pokeapi.co/api/v2/";
 
-    // Interfaz para callback cuando termina una lista de Pokémon
-    public interface OnPokemonListReady {
-        void onResult(ArrayList<Pokemon> lista);
+    // -------------------------------------------------------------------------
+    // Interfaces de callback
+    // -------------------------------------------------------------------------
+    // Estas interfaces permiten devolver los datos de forma asincrona (sin bloquear)
+    public interface AlListoPokemon {
+        void alObtener(ArrayList<Pokemon> lista);
     }
 
-    // Interfaz para callback cuando termina de descargar una imagen
-    public interface OnImagenDescargada {
-        void onDescargada(Bitmap imagen);
+    public interface AlDescargarImagen {
+        void alDescargar(Bitmap imagen);
     }
 
     // -------------------------------------------------------------------------
-    // 🔹 Obtener lista de Pokémon por tipo (asíncrono, sin bloquear UI)
+    // 🔹 METODO: obtenerPokemonPorTipo
     // -------------------------------------------------------------------------
-    public static void obtenerPokemonPorTipo(String tipo, OnPokemonListReady listener) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+    /**
+     * Metodo asincrono que obtiene una lista de Pokemon de un tipo concreto.
+     *
+     * Llama internamente a {@link #obtenerPokemonPorTipoSync(String)}.
+     * Se usa en ActivityLista para cargar los Pokemon del tipo seleccionado.
+     */
+    public static void obtenerPokemonPorTipo(String tipo, AlListoPokemon listener) {
+        ExecutorService ejecutor = Executors.newSingleThreadExecutor();
         Handler handler = new Handler(Looper.getMainLooper());
 
-        executor.execute(() -> {
+        ejecutor.execute(() -> {
             ArrayList<Pokemon> lista = obtenerPokemonPorTipoSync(tipo);
             handler.post(() -> {
-                if (listener != null) listener.onResult(lista);
+                if (listener != null) listener.alObtener(lista);
             });
         });
     }
 
     // -------------------------------------------------------------------------
-    // 🔹 Versión sincrónica (para usar dentro del executor)
+    // 🔹 METODO: obtenerPokemonPorTipoSync
     // -------------------------------------------------------------------------
+    /**
+     * Metodo sincrono (bloqueante) que obtiene los Pokemon de un tipo.
+     *
+     * Llamado desde {@link #obtenerPokemonPorTipo(String, AlListoPokemon)}.
+     *
+     * 1️⃣ Hace la peticion a la API (https://pokeapi.co/api/v2/type/{tipo})
+     * 2️⃣ Crea objetos Pokemon basicos
+     * 3️⃣ Devuelve una lista con los primeros 30 resultados
+     */
     public static ArrayList<Pokemon> obtenerPokemonPorTipoSync(String tipo) {
         ArrayList<Pokemon> lista = new ArrayList<>();
         String urlString = BASE_URL + "type/" + tipo.toLowerCase();
 
         try {
-            // 1️⃣ Conectamos con la API
             URL url = new URL(urlString);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
+            HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
+            conexion.setRequestMethod("GET");
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            BufferedReader lector = new BufferedReader(new InputStreamReader(conexion.getInputStream()));
             StringBuilder jsonBuilder = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                jsonBuilder.append(line);
-            }
+            String linea;
+            while ((linea = lector.readLine()) != null) jsonBuilder.append(linea);
+            lector.close();
+            conexion.disconnect();
 
-            reader.close();
-            conn.disconnect();
-
-            // 2️⃣ Parseamos el JSON
             JSONObject json = new JSONObject(jsonBuilder.toString());
             JSONArray pokemons = json.getJSONArray("pokemon");
 
@@ -85,7 +142,7 @@ public class PokedexApi {
                 String nombre = pokeObj.getString("name");
                 String urlDetalle = pokeObj.getString("url");
 
-                Pokemon p = obtenerDetallePokemon(urlDetalle);
+                Pokemon p = obtenerDetallePokemon(urlDetalle); // 🔸 Llama al metodo de detalles
                 if (p != null) lista.add(p);
             }
 
@@ -97,29 +154,34 @@ public class PokedexApi {
     }
 
     // -------------------------------------------------------------------------
-    // 🔹 Obtener detalles de un Pokémon
+    // 🔹 METODO: obtenerDetallePokemon
     // -------------------------------------------------------------------------
+    /**
+     * Descarga los detalles de un Pokemon (nombre, numero, imagen, tipos, peso, altura, habilidad)
+     *
+     * Este metodo es usado por:
+     * - {@link #obtenerPokemonPorTipoSync(String)}
+     * - {@link #buscarPorNombre(String, AlListoPokemon)}
+     */
     public static Pokemon obtenerDetallePokemon(String urlString) {
         try {
             URL url = new URL(urlString);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
+            HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
+            conexion.setRequestMethod("GET");
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            BufferedReader lector = new BufferedReader(new InputStreamReader(conexion.getInputStream()));
             StringBuilder jsonBuilder = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                jsonBuilder.append(line);
-            }
-            reader.close();
-            conn.disconnect();
+            String linea;
+            while ((linea = lector.readLine()) != null) jsonBuilder.append(linea);
+            lector.close();
+            conexion.disconnect();
 
             JSONObject json = new JSONObject(jsonBuilder.toString());
             String nombre = json.getString("name");
             int numero = json.getInt("id");
             String imagen = json.getJSONObject("sprites").getString("front_default");
 
-            // Tipos
+            // Obtener tipos
             JSONArray tiposArray = json.getJSONArray("types");
             ArrayList<String> tipos = new ArrayList<>();
             for (int i = 0; i < tiposArray.length(); i++) {
@@ -128,14 +190,12 @@ public class PokedexApi {
                         .getString("name"));
             }
 
-            // Creamos el objeto Pokémon
+            // Crear el objeto Pokemon con los datos obtenidos
             Pokemon p = new Pokemon();
             p.setNombre(nombre);
             p.setNumero(numero);
             p.setImagenUrl(imagen);
             p.setTipos(tipos);
-
-            // Detalles adicionales
             p.setAltura(json.getDouble("height") / 10.0);
             p.setPeso(json.getDouble("weight") / 10.0);
 
@@ -156,56 +216,67 @@ public class PokedexApi {
     }
 
     // -------------------------------------------------------------------------
-    // 🔹 Descargar imagen (sin bloqueo, con callback)
+    // 🔹 METODO: descargarImagen
     // -------------------------------------------------------------------------
-    public static void descargarImagen(String urlImagen, OnImagenDescargada listener) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+    /**
+     * Descarga una imagen desde una URL (sprite del Pokemon).
+     *
+     * Llamado desde ActivityDetalle para mostrar la imagen del Pokemon.
+     */
+    public static void descargarImagen(String urlImagen, AlDescargarImagen listener) {
+        ExecutorService ejecutor = Executors.newSingleThreadExecutor();
         Handler handler = new Handler(Looper.getMainLooper());
 
-        executor.execute(() -> {
+        ejecutor.execute(() -> {
             Bitmap bitmap = null;
             try {
                 URL url = new URL(urlImagen);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.connect();
-                InputStream input = conn.getInputStream();
+                HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
+                conexion.connect();
+                InputStream input = conexion.getInputStream();
                 bitmap = BitmapFactory.decodeStream(input);
                 input.close();
-                conn.disconnect();
+                conexion.disconnect();
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
-            Bitmap finalBitmap = bitmap;
+            Bitmap imagenFinal = bitmap;
             handler.post(() -> {
-                if (listener != null) listener.onDescargada(finalBitmap);
+                if (listener != null) listener.alDescargar(imagenFinal);
             });
         });
     }
 
-
     // -------------------------------------------------------------------------
-    // 🔹 Buscador
+    // 🔹 METODO: buscarPorNombre
     // -------------------------------------------------------------------------
-    public static void buscarPorNombre(String texto, OnPokemonListReady listener) {
+    /**
+     * Busca Pokemon que empiecen por un texto.
+     *
+     * Se usa en los buscadores de:
+     * - ActivityLista
+     * - ActivityTipos
+     * - ActivityDetalle
+     *
+     * Llama a {@link #obtenerDetallePokemon(String)} para obtener los datos de cada resultado.
+     */
+    public static void buscarPorNombre(String texto, AlListoPokemon listener) {
         new Thread(() -> {
             ArrayList<Pokemon> resultados = new ArrayList<>();
-            String urlString = BASE_URL + "pokemon?limit=1025";
+            String urlString = BASE_URL + "pokemon?limit=1025"; // Se obtienen todos los nombres
 
             try {
                 URL url = new URL(urlString);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("GET");
+                HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
+                conexion.setRequestMethod("GET");
 
-                BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                BufferedReader lector = new BufferedReader(new InputStreamReader(conexion.getInputStream()));
                 StringBuilder jsonBuilder = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    jsonBuilder.append(line);
-                }
-
-                reader.close();
-                conn.disconnect();
+                String linea;
+                while ((linea = lector.readLine()) != null) jsonBuilder.append(linea);
+                lector.close();
+                conexion.disconnect();
 
                 JSONObject json = new JSONObject(jsonBuilder.toString());
                 JSONArray pokemons = json.getJSONArray("results");
@@ -214,9 +285,10 @@ public class PokedexApi {
                     JSONObject pokeObj = pokemons.getJSONObject(i);
                     String nombre = pokeObj.getString("name");
 
+                    // Filtra los nombres que empiecen por el texto introducido
                     if (nombre.startsWith(texto.toLowerCase())) {
                         String urlDetalle = pokeObj.getString("url");
-                        Pokemon p = obtenerDetallePokemon(urlDetalle);
+                        Pokemon p = obtenerDetallePokemon(urlDetalle); // 🔸 Llama al metodo de detalles
                         if (p != null) resultados.add(p);
                     }
                 }
@@ -225,33 +297,38 @@ public class PokedexApi {
                 e.printStackTrace();
             }
 
-            if (listener != null) listener.onResult(resultados);
+            if (listener != null) listener.alObtener(resultados);
         }).start();
     }
 
+    // -------------------------------------------------------------------------
+    // 🔹 METODO: obtenerPokemonPorTipoSync con paginacion (offset, limite)
+    // -------------------------------------------------------------------------
+    /**
+     * Version mejorada del metodo de tipo, con paginacion.
+     *
+     * Se usa en ActivityLista para el boton "Ver mas Pokemon".
+     * Carga los siguientes 30 resultados a partir del offset.
+     */
     public static ArrayList<Pokemon> obtenerPokemonPorTipoSync(String tipo, int offset, int limite) {
         ArrayList<Pokemon> lista = new ArrayList<>();
         String urlString = BASE_URL + "type/" + tipo.toLowerCase();
 
         try {
             URL url = new URL(urlString);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
+            HttpURLConnection conexion = (HttpURLConnection) url.openConnection();
+            conexion.setRequestMethod("GET");
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            BufferedReader lector = new BufferedReader(new InputStreamReader(conexion.getInputStream()));
             StringBuilder jsonBuilder = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                jsonBuilder.append(line);
-            }
-
-            reader.close();
-            conn.disconnect();
+            String linea;
+            while ((linea = lector.readLine()) != null) jsonBuilder.append(linea);
+            lector.close();
+            conexion.disconnect();
 
             JSONObject json = new JSONObject(jsonBuilder.toString());
             JSONArray pokemons = json.getJSONArray("pokemon");
 
-            // Cargar en bloques (por ejemplo 30)
             int inicio = offset;
             int fin = Math.min(offset + limite, pokemons.length());
 
@@ -270,6 +347,4 @@ public class PokedexApi {
 
         return lista;
     }
-
-
 }
