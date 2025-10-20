@@ -117,13 +117,6 @@
                     android:textColor="#FFFFFF"
                     android:textSize="16sp" />
 
-                <TextView
-                    android:id="@+id/txtSexo"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Sexo: ♂ ♀"
-                    android:textColor="#FFFFFF"
-                    android:textSize="16sp" />
 
                 <TextView
                     android:id="@+id/txtCategoria"
@@ -140,6 +133,18 @@
                     android:text="Habilidad: Espesura"
                     android:textColor="#FFFFFF"
                     android:textSize="16sp" />
+                <TextView
+                    android:id="@+id/txtDescripcion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="Descripción del Pokémon..."
+                    android:textColor="#EDEDED"
+                    android:textSize="15sp"
+                    android:gravity="center"
+                    android:lineSpacingExtra="4dp"
+                    android:paddingHorizontal="10dp"
+                    android:textAlignment="center" />
             </LinearLayout>
 
             <!-- Tipo -->

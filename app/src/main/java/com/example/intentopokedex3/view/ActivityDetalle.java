@@ -1,6 +1,7 @@
 package com.example.intentopokedex3.view;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
@@ -8,6 +9,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -36,67 +38,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/**
- * Pantalla de detalle de un Pokemon concreto.
- * Muestra su imagen, datos basicos, tipos y debilidades.
- *
- * FLUJO DETALLE:
- * onCreate()
- *    ↳ carga el layout activity_detalle.xml
- *    ↳ obtiene referencias (imagen, textos, botones, buscador, contenedores)
- *    ↳ configura navegacion:
- *         • btnVolverDetalle → finish()
- *         • logoInicioDetalle → abre ActivityInicio
- *    ↳ configura el buscador (igual que en Tipos y Lista)
- *         • PokedexApi.buscarPorNombre()
- *         • muestra resultados y abre ActivityDetalle al pulsar
- *    ↳ recupera datos del Intent:
- *         nombrePokemon, numeroPokemon, imagenUrl
- *    ↳ muestra el nombre y numero
- *    ↳ PokedexApi.descargarImagen() → muestra sprite
- *    ↳ cargaDetallesPokemon(nombre)
- *
- * cargarDetallesPokemon(nombre)
- *    ↳ crea hilo con ExecutorService
- *    ↳ hace peticion a URL "https://pokeapi.co/api/v2/pokemon/{nombre}"
- *    ↳ obtiene JSON con:
- *         • altura
- *         • peso
- *         • habilidad
- *         • tipos
- *    ↳ crea objeto Pokemon con esos datos
- *    ↳ en el hilo principal:
- *         mostrarDetalles(p)
- *         cargarDebilidades(p.getTipos())
- *
- * mostrarDetalles(p)
- *    ↳ muestra altura, peso, habilidad, etc. en TextViews
- *    ↳ llama a mostrarTipos(p.getTipos())
- *
- * mostrarTipos(tipos)
- *    ↳ limpia el contenedor de tipos
- *    ↳ por cada tipo crea un chip de color con crearChip()
- *
- * cargarDebilidades(tipos)
- *    ↳ recorre cada tipo
- *    ↳ consulta la API: "https://pokeapi.co/api/v2/type/{tipo}"
- *    ↳ obtiene el JSON con "double_damage_from"
- *    ↳ añade cada tipo de debilidad a una lista
- *    ↳ en el hilo principal:
- *         crea chips con crearChip() y los agrega al contenedor
- *
- * crearChip(texto)
- *    ↳ crea un TextView con texto y color de fondo
- *    ↳ llama a crearFondoTipo(tipo) para obtener el color
- *
- * crearFondoTipo(tipo)
- *    ↳ crea un GradientDrawable con color segun el tipo (mapa de colores)
- *    ↳ devuelve el fondo para el chip
- *
- * 🔹 Objetivo:
- *    Muestra toda la informacion detallada del Pokemon:
- *    imagen, altura, peso, tipos, habilidades y debilidades.
- */
+
 public class ActivityDetalle extends AppCompatActivity {
 
     // -------------------------------------------------------------------------
@@ -134,7 +76,6 @@ public class ActivityDetalle extends AppCompatActivity {
         textoNumero = findViewById(R.id.txtNumeroPokemon);
         textoAltura = findViewById(R.id.txtAltura);
         textoPeso = findViewById(R.id.txtPeso);
-        textoSexo = findViewById(R.id.txtSexo);
         textoCategoria = findViewById(R.id.txtCategoria);
         textoHabilidad = findViewById(R.id.txtHabilidad);
         contenedorTipos = findViewById(R.id.contenedorTipos);
@@ -156,9 +97,12 @@ public class ActivityDetalle extends AppCompatActivity {
             cargarDetallesPokemon(nombrePokemon.toLowerCase());
 
             // Descargar imagen con PokedexApi
-            PokedexApi.descargarImagen(urlImagen, bitmap -> {
-                if (bitmap != null) imagenPokemon.setImageBitmap(bitmap);
-            });
+            new Thread(() -> {
+                Bitmap imagen = PokedexApi.descargarImagen(urlImagen);
+                runOnUiThread(() -> {
+                    if (imagen != null) imagenPokemon.setImageBitmap(imagen);
+                });
+            }).start();
         } else {
             textoNombre.setText("Pokemon no encontrado");
         }
@@ -186,35 +130,43 @@ public class ActivityDetalle extends AppCompatActivity {
         ArrayAdapter<String> adaptador = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, nombresPokemon);
         listaSugerencias.setAdapter(adaptador);
 
-        // Detecta texto en el buscador
+        // Variable para guardar el texto más reciente
+        final String[] ultimaBusqueda = {""};
+
         campoBuscar.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 String texto = s.toString().trim().toLowerCase();
+                ultimaBusqueda[0] = texto; // Guardamos lo último que escribió el usuario
 
                 if (texto.length() >= 1) {
-                    // Llamada a la API para buscar por nombre
-                    PokedexApi.buscarPorNombre(texto, lista -> {
+                    new Thread(() -> {
+                        ArrayList<Pokemon> lista = PokedexApi.buscarPorNombre(texto);
+
                         runOnUiThread(() -> {
+                            // ✅ Solo actualizamos si el texto no ha cambiado mientras la API respondía
+                            if (!texto.equals(ultimaBusqueda[0])) return;
+
                             nombresPokemon.clear();
                             for (Pokemon p : lista) {
                                 nombresPokemon.add("#" + p.getNumero() + " " + p.getNombre().toUpperCase());
                             }
                             adaptador.notifyDataSetChanged();
-                            listaSugerencias.setVisibility(android.view.View.VISIBLE);
+                            listaSugerencias.setVisibility(View.VISIBLE);
                         });
-                    });
+                    }).start();
                 } else {
-                    listaSugerencias.setVisibility(android.view.View.GONE);
+                    nombresPokemon.clear();
+                    adaptador.notifyDataSetChanged();
+                    listaSugerencias.setVisibility(View.GONE);
                 }
             }
 
             @Override public void afterTextChanged(Editable s) {}
         });
 
-        // Al pulsar una sugerencia se abre el detalle del Pokemon
         listaSugerencias.setOnItemClickListener((parent, view, position, id) -> {
             String textoSeleccionado = nombresPokemon.get(position);
             String[] partes = textoSeleccionado.split(" ");
@@ -224,12 +176,14 @@ public class ActivityDetalle extends AppCompatActivity {
             Intent i = new Intent(ActivityDetalle.this, ActivityDetalle.class);
             i.putExtra("nombrePokemon", nombre);
             i.putExtra("numeroPokemon", numero);
-            i.putExtra("imagenUrl", "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/" + numero + ".png");
+            i.putExtra("imagenUrl",
+                    "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/" + numero + ".png");
             startActivity(i);
 
-            listaSugerencias.setVisibility(android.view.View.GONE);
+            listaSugerencias.setVisibility(View.GONE);
         });
     }
+
 
     // -------------------------------------------------------------------------
     // 🔹 Metodo que obtiene los datos del Pokemon enviados desde otra pantalla
@@ -258,6 +212,7 @@ public class ActivityDetalle extends AppCompatActivity {
 
         executor.execute(() -> {
             try {
+                // 1️⃣ Petición principal: datos básicos
                 URL url = new URL("https://pokeapi.co/api/v2/pokemon/" + nombre);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
@@ -265,14 +220,13 @@ public class ActivityDetalle extends AppCompatActivity {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                 StringBuilder jsonBuilder = new StringBuilder();
                 String linea;
-                while ((linea = reader.readLine()) != null) {
-                    jsonBuilder.append(linea);
-                }
+                while ((linea = reader.readLine()) != null) jsonBuilder.append(linea);
                 reader.close();
                 conn.disconnect();
 
                 JSONObject json = new JSONObject(jsonBuilder.toString());
 
+                int id = json.getInt("id");
                 double altura = json.getDouble("height") / 10.0;
                 double peso = json.getDouble("weight") / 10.0;
 
@@ -281,7 +235,34 @@ public class ActivityDetalle extends AppCompatActivity {
                         .getJSONObject("ability")
                         .getString("name");
 
-                // Tipos del Pokemon
+                // Traducir habilidad al español desde endpoint /ability/
+                String habilidadEsp = habilidad;
+                try {
+                    URL urlHab = new URL("https://pokeapi.co/api/v2/ability/" + habilidad);
+                    HttpURLConnection connHab = (HttpURLConnection) urlHab.openConnection();
+                    connHab.setRequestMethod("GET");
+
+                    BufferedReader readerHab = new BufferedReader(new InputStreamReader(connHab.getInputStream()));
+                    StringBuilder jsonHab = new StringBuilder();
+                    String lineaHab;
+                    while ((lineaHab = readerHab.readLine()) != null) jsonHab.append(lineaHab);
+                    readerHab.close();
+                    connHab.disconnect();
+
+                    JSONObject jsonHabilidad = new JSONObject(jsonHab.toString());
+                    JSONArray nombres = jsonHabilidad.getJSONArray("names");
+                    for (int i = 0; i < nombres.length(); i++) {
+                        JSONObject nameObj = nombres.getJSONObject(i);
+                        if (nameObj.getJSONObject("language").getString("name").equals("es")) {
+                            habilidadEsp = nameObj.getString("name");
+                            break;
+                        }
+                    }
+
+                } catch (Exception e) {
+                    habilidadEsp = habilidad; // fallback
+                }
+
                 JSONArray tiposArray = json.getJSONArray("types");
                 ArrayList<String> tipos = new ArrayList<>();
                 for (int i = 0; i < tiposArray.length(); i++) {
@@ -290,18 +271,65 @@ public class ActivityDetalle extends AppCompatActivity {
                             .getString("name"));
                 }
 
-                // Crear objeto Pokemon con los datos
+                // 2️⃣ Petición secundaria: especie (categoría + descripción en español)
+                String categoria = "";
+                String descripcion = "";
+
+                try {
+                    URL urlEspecie = new URL("https://pokeapi.co/api/v2/pokemon-species/" + id);
+                    HttpURLConnection connEsp = (HttpURLConnection) urlEspecie.openConnection();
+                    connEsp.setRequestMethod("GET");
+
+                    BufferedReader readerEsp = new BufferedReader(new InputStreamReader(connEsp.getInputStream()));
+                    StringBuilder jsonEspBuilder = new StringBuilder();
+                    String lineaEsp;
+                    while ((lineaEsp = readerEsp.readLine()) != null) jsonEspBuilder.append(lineaEsp);
+                    readerEsp.close();
+                    connEsp.disconnect();
+
+                    JSONObject jsonEsp = new JSONObject(jsonEspBuilder.toString());
+
+                    // Categoría (genera)
+                    JSONArray generaArray = jsonEsp.getJSONArray("genera");
+                    for (int i = 0; i < generaArray.length(); i++) {
+                        JSONObject genusObj = generaArray.getJSONObject(i);
+                        if (genusObj.getJSONObject("language").getString("name").equals("es")) {
+                            categoria = genusObj.getString("genus");
+                            break;
+                        }
+                    }
+
+                    // Descripción (flavor_text_entries)
+                    JSONArray flavorArray = jsonEsp.getJSONArray("flavor_text_entries");
+                    for (int i = 0; i < flavorArray.length(); i++) {
+                        JSONObject flavor = flavorArray.getJSONObject(i);
+                        if (flavor.getJSONObject("language").getString("name").equals("es")) {
+                            descripcion = flavor.getString("flavor_text")
+                                    .replace("\n", " ")
+                                    .replace("\f", " ");
+                            break;
+                        }
+                    }
+
+                } catch (Exception e2) {
+                    categoria = "Desconocida";
+                    descripcion = "No hay descripción disponible.";
+                }
+
+                // 3️⃣ Crear objeto Pokemon con datos
                 Pokemon p = new Pokemon();
                 p.setNombre(nombrePokemon);
-                p.setNumero(Integer.parseInt(numeroPokemon));
+                p.setNumero(id);
                 p.setAltura(altura);
                 p.setPeso(peso);
-                p.setHabilidad(habilidad);
+                p.setHabilidad(habilidadEsp);
                 p.setTipos(tipos);
 
-                // Volver al hilo principal para actualizar la UI
+                String finalCategoria = categoria;
+                String finalDescripcion = descripcion;
+
                 handler.post(() -> {
-                    mostrarDetalles(p);
+                    mostrarDetalles(p, finalCategoria, finalDescripcion);
                     cargarDebilidades(p.getTipos());
                 });
 
@@ -311,6 +339,8 @@ public class ActivityDetalle extends AppCompatActivity {
         });
     }
 
+
+
     // -------------------------------------------------------------------------
     // 🔹 Metodo que muestra los detalles del Pokemon en pantalla
     // -------------------------------------------------------------------------
@@ -318,14 +348,20 @@ public class ActivityDetalle extends AppCompatActivity {
      * Rellena los textos con la informacion del objeto Pokemon.
      * Llama a {@link #mostrarTipos(ArrayList)} para mostrar los tipos con color.
      */
-    private void mostrarDetalles(Pokemon p) {
+    private void mostrarDetalles(Pokemon p, String categoria, String descripcion) {
         textoAltura.setText("Altura: " + p.getAltura() + " m");
         textoPeso.setText("Peso: " + p.getPeso() + " kg");
-        textoSexo.setText("Sexo: ♂ ♀");
-        textoCategoria.setText("Categoria: Semilla");
+        textoCategoria.setText("Categoría: " + categoria);
         textoHabilidad.setText("Habilidad: " + p.getHabilidad());
         mostrarTipos(p.getTipos());
+
+        TextView textoDescripcion = findViewById(R.id.txtDescripcion);
+        if (textoDescripcion != null) {
+            textoDescripcion.setText(descripcion);
+        }
     }
+
+
 
     // -------------------------------------------------------------------------
     // 🔹 Metodo que muestra los tipos del Pokemon con su color correspondiente
