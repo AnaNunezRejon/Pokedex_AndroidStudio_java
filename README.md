@@ -1,5 +1,6 @@
 
 <img width="2180" height="1408" alt="mockup" src="https://github.com/user-attachments/assets/fb1bb715-259f-4650-8434-79891a28c94c" />
+
 # Pokédex  
 
 Aplicación Android basada en el patrón **Modelo - Vista - Controlador (MVC)**  
