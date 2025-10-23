@@ -169,7 +169,7 @@ ActivityDetalle
 
 - Basado en `EditText` + `TextWatcher`.  
 - Realiza llamadas a `PokedexApi.buscarPorNombre()` en un **Thread**.  
-- Si el texto cambia durante la búsqueda → se **descarta el resultado anterior** (antirrebote).  
+- Si el texto cambia durante la búsqueda → se **descarta el resultado anterior**.  
 - Permite buscar por **nombre parcial o número**.  
 - Muestra una lista flotante (`ListView`) con resultados.
 
@@ -222,7 +222,6 @@ com.example.intentopokedex3
 ✅ Búsqueda por número → *“25” → Pikachu*  
 ✅ Traducciones al español correctas (habilidad, descripción, categoría)  
 ✅ Paginación fluida (bloques de 30)  
-✅ Antirrebote funcional  
 ✅ Carga de debilidades exacta según tipo  
 
 ---
@@ -233,7 +232,6 @@ com.example.intentopokedex3
 - Añadir **favoritos offline** (Room Database).  
 - Cachear imágenes (Glide o LruCache).  
 - Modo oscuro y soporte accesibilidad.  
-- Pruebas unitarias de modelo y UI (Espresso).  
 
 ---
 
