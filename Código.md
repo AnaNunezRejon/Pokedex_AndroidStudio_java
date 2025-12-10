@@ -1,3 +1,5 @@
+![pokedex](https://github.com/user-attachments/assets/436db1ae-5593-4cd4-8692-22e3a1a0574d)
+
 # ESTRUCTURA
 ```plsql
 app/
