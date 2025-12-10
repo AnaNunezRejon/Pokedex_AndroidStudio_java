@@ -13,15 +13,14 @@ app/
  │         │     └── Pokemon.java
  │         │
  │         └── view/
- │               ├── ActividadDetalle.java
- │               ├── ActividadInicio.java
- │               ├── ActividadLista.java
- │               ├── ActividadTipos.java
+ │               ├── ActivityDetalle.java
+ │               ├── ActivityInicio.java
+ │               ├── ActivityLista.java
+ │               └── ActivityTipos.java
  │
  ├── res/
  │    ├── drawable/
  │    │     ├── barra_inferior.png
- │    │     ├── borde_caja.xml
  │    │     ├── btn_acero.png
  │    │     ├── btn_agua.png
  │    │     ├── btn_bicho.png
@@ -41,8 +40,6 @@ app/
  │    │     ├── btn_veneno.png
  │    │     ├── btn_volador.png
  │    │     ├── btn_volver.xml
- │    │     ├── chip_debilidad.xml
- │    │     ├── chip_tipo.xml
  │    │     ├── fondo_caja_detalle.xml
  │    │     ├── fondo_inicio.png
  │    │     ├── fondo_item_pokemon.xml
@@ -50,7 +47,6 @@ app/
  │    │     ├── fondo_pokedex_dos.png
  │    │     ├── fondo_pokedex_uno.png
  │    │     ├── fondo_pokemons.jpg
- │    │     ├── ic_arrow_back_black_24dp.xml
  │    │     ├── ic_launcher_background.xml
  │    │     ├── ic_launcher_foreground.xml
  │    │     ├── logo_pokedex.png
@@ -433,7 +429,7 @@ public class Pokemon {
 }
 ```
 # VIEW
-ActividadDetalle.java
+ActivityDetalle.java
 ```java
 package com.example.intentopokedex3.view;
 
@@ -931,7 +927,7 @@ public class ActivityDetalle extends AppCompatActivity {
     }
 }
 ```
-ActividadInicio.java
+ActivityInicio.java
 ```java
 package com.example.intentopokedex3.view;
 
@@ -971,7 +967,7 @@ public class ActivityInicio extends AppCompatActivity {
 
 
 ```
-ActividadLista.java
+ActivityLista.java
 ```java
 package com.example.intentopokedex3.view;
 
@@ -1216,7 +1212,7 @@ public class ActivityLista extends AppCompatActivity {
 
 
 ```
-ActividadTipos.java
+ActivityTipos.java
 ```java
 package com.example.intentopokedex3.view;
 
@@ -2360,3 +2356,4 @@ activity_tipos.xml
 
 
 ```
+
