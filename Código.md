@@ -2241,3 +2241,42 @@ activity_tipos.xml
 
 
 ```
+```
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Permiso para usar Internet -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Pokedex"
+        tools:targetApi="31">
+
+        <!-- 🟢 Pantalla principal (solo una con MAIN + LAUNCHER) -->
+        <activity
+            android:name=".view.ActividadInicio"
+            android:exported="true"
+            android:theme="@style/Theme.Pokedex.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Otras pantallas de la app -->
+        <activity android:name=".view.ActividadTipos" android:exported="true" />
+        <activity android:name=".view.ActividadLista" android:exported="true" />
+        <activity android:name=".view.ActividadDetalle" android:exported="true" />
+
+    </application>
+</manifest>
+
+```
