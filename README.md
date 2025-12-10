@@ -1,6 +1,7 @@
 
 <img width="2180" height="1408" alt="mockup" src="https://github.com/user-attachments/assets/fb1bb715-259f-4650-8434-79891a28c94c" />
-![pokedex](https://github.com/user-attachments/assets/3ff23006-13da-414d-9e99-98b15efe8931)
+
+![pokedex](https://github.com/user-attachments/assets/fcf21764-ad9f-4079-bcca-5928a4b18819)
 
 # Pokédex  
 
